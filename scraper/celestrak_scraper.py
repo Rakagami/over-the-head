@@ -1,8 +1,8 @@
 from models import Constellation, ConstellationSatellite, TLE
-import pandas as pd
 import requests
-import bs4
 import logging
+import os
+from pathlib import Path
 
 """
 Celestrak Scraper: https://celestrak.org/
@@ -23,9 +23,21 @@ class CelestrakScraper:
         Scraping a Celestrak Page URL and returns a set of ConstellationSatellite
         """
 
+        # TODO: implement that caches that are too old are not used
         try:
-            response = requests.get(url)
-            tle_list = [line.strip() for line in response.text.split("\n") if line != ""]
+            cache_folder_path = Path("/tmp/scraper_cache/celestrak")
+            cache_file = f"{hash(url)}.txt"
+            cache_path = cache_folder_path / cache_file
+            if os.path.isdir(cache_folder_path) and os.path.exists(cache_path):
+                with open(cache_path) as f:
+                    response_text = f.read()
+            else:
+                response = requests.get(url)
+                response_text = response.text
+                cache_folder_path.mkdir(parents=True, exist_ok=True)
+                with open(cache_path, "w") as f:
+                    f.write(response_text)
+            tle_list = [line.strip() for line in response_text.split("\n") if line != ""]
 
             def get_satellite(i):
                 return ConstellationSatellite(

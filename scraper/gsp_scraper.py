@@ -79,45 +79,62 @@ class GSPScraper:
         """
         Scraping a Gunter's Space Page URL
         """
-        response = requests.get(url)
-        soup = bs4.BeautifulSoup(response.text, features="html.parser")
-        satdata = soup.find("table", {"id": "satdata"})
-        satlist = soup.find("table", {"id": "satlist"})
+        # TODO: implement that caches that are too old are not used
+        try:
+            cache_folder_path = Path("/tmp/scraper_cache/gsp")
+            cache_file = f"{hash(url)}.txt"
+            cache_path = cache_folder_path / cache_file
+            if os.path.isdir(cache_folder_path) and os.path.exists(cache_path):
+                with open(cache_path) as f:
+                    response_text = f.read()
+            else:
+                response = requests.get(url)
+                response_text = response.text
+                cache_folder_path.mkdir(parents=True, exist_ok=True)
+                with open(cache_path, "w") as f:
+                    f.write(response_text)
 
-        def parse_row(trrow):
-            tdlist = trrow.find_all("td")
-            namelist = [td.text for td in tdlist]
-            return namelist
+            soup = bs4.BeautifulSoup(response_text, features="html.parser")
+            satdata = soup.find("table", {"id": "satdata"})
+            satlist = soup.find("table", {"id": "satlist"})
 
-        satlist_dict = {
-            "Satellite": [],
-            "COSPAR": [],
-            "Date": [],
-            "LS": [],
-            "Failed": [],
-            "Launch Vehicle": [],
-            "Remarks": [],
-        }
+            def parse_row(trrow):
+                tdlist = trrow.find_all("td")
+                namelist = [td.text for td in tdlist]
+                return namelist
 
-        for trrow in satlist.find_all("tr")[1:]:
-            namelist = parse_row(trrow)
-            datestr = namelist[2].lower()
-            if datestr == "cancelled" or datestr == "2023" or datestr == "not launched":
-                continue
-            try:
-                date = pd.to_datetime(datestr, format="%d.%m.%Y")
-            except:
-                continue
-            satlist_dict["Satellite"].append(namelist[0])
-            satlist_dict["COSPAR"].append(namelist[1])
-            satlist_dict["Date"].append(date)
-            satlist_dict["LS"].append(namelist[3])
-            satlist_dict["Failed"].append(namelist[4])
-            satlist_dict["Launch Vehicle"].append(namelist[5])
-            satlist_dict["Remarks"].append(namelist[6])
+            satlist_dict = {
+                "Satellite": [],
+                "COSPAR": [],
+                "Date": [],
+                "LS": [],
+                "Failed": [],
+                "Launch Vehicle": [],
+                "Remarks": [],
+            }
 
-        df = pd.DataFrame(satlist_dict)
-        return df
+            for trrow in satlist.find_all("tr")[1:]:
+                namelist = parse_row(trrow)
+                datestr = namelist[2].lower()
+                if datestr == "cancelled" or datestr == "2023" or datestr == "not launched":
+                    continue
+                try:
+                    date = pd.to_datetime(datestr, format="%d.%m.%Y")
+                except:
+                    continue
+                satlist_dict["Satellite"].append(namelist[0])
+                satlist_dict["COSPAR"].append(namelist[1])
+                satlist_dict["Date"].append(date)
+                satlist_dict["LS"].append(namelist[3])
+                satlist_dict["Failed"].append(namelist[4])
+                satlist_dict["Launch Vehicle"].append(namelist[5])
+                satlist_dict["Remarks"].append(namelist[6])
+
+            df = pd.DataFrame(satlist_dict)
+            return df
+        except:
+            logging.warning(f"Could not scrape url {url}")
+            return pd.DataFrame({})
 
     @classmethod
     def scrape_constellation(cls, constellation: Constellation):
