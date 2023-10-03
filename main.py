@@ -2,18 +2,26 @@ import argparse
 from datetime import datetime, timezone
 from models import ConstellationSatellite, Constellation, OverpassEventType
 from utils.types import Coordinate
+from scraper import GSPScraper
 from satellite_repository import SatelliteRepository
 from orbital_logic import check_overpass_events
 import logging
 
 
-def check_overhead(
+def check_overhead_df(
     latitude: float,
     longitude: float,
     starttime: datetime,
     endtime: datetime,
     constellation=Constellation.STARLINK,
 ):
+    """
+    Check what is overhead within given time intervall and returns a dataframe of satellites
+    """
+
+    # TODO: remove hardcode
+    assert constellation == Constellation.STARLINK, "Other constellation not supported yet"
+
     repository = SatelliteRepository.fetch_constellation(constellation=constellation, reference_epoch=starttime)
     coordinate = Coordinate(latitude, longitude)
     min_elevation = 0.0
@@ -27,10 +35,12 @@ def check_overhead(
         if len(op_set_below_events) == 0 and over_t0 and over_t1:
             overpassing_sats.append(sat)
 
-    for sat in overpassing_sats:
-        print(sat)
+    designator_list = [s.cospar_id for s in overpassing_sats]
+    # Construct Dataframe out of the satellites
+    df = GSPScraper.scrape_constellation(Constellation.STARLINK)
+    df = df[df["COSPAR"].isin(designator_list)]
 
-    # TODO: use gsp_scraper to check the shells of those starlink satellites
+    return df
 
 
 def main():
@@ -62,6 +72,19 @@ def main():
         help="ISO Formatted date string in UTC",
         type=lambda s: datetime.fromisoformat(s).replace(tzinfo=timezone.utc),
     )
+    parser.add_argument(
+        "-o",
+        "--output",
+        help="Csv output",
+        type=str,
+        default=""
+    )
+    parser.add_argument(
+        "--starlink_groups",
+        dest="starlink_groups",
+        action="store_true",
+        help="Prints out the starlink groups",
+    )
     args = parser.parse_args()
 
     if args.verbose:
@@ -69,7 +92,13 @@ def main():
     else:
         logging.basicConfig(level=logging.INFO)
 
-    check_overhead(args.latitude, args.longitude, args.starttime, args.endtime)
+    df = check_overhead_df(args.latitude, args.longitude, args.starttime, args.endtime)
+
+    if args.output is not None and len(args.output) > 0:
+        df.to_csv(args.output)
+
+    if args.starlink_groups:
+        print(sorted(list(set(df["GROUP"]))))
 
 
 if __name__ == "__main__":
