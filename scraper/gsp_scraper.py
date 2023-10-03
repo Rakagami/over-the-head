@@ -64,8 +64,8 @@ class GSPScraper:
 
     POST_PROCESSOR = {
         Constellation.STARLINK: [
-            ("STARLINK_NUMBER", starlink_parse_group),
-            ("GROUP", starlink_parse_starlinknum),
+            ("GROUP", starlink_parse_group),
+            ("STARLINK_NUMBER", starlink_parse_starlinknum),
         ],
         Constellation.ONEWEB: [],
         Constellation.GLOBALSTAR: [],
