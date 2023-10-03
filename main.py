@@ -14,7 +14,7 @@ def check_overhead_df(
     starttime: datetime,
     endtime: datetime,
     constellation=Constellation.STARLINK,
-    min_elevation: float = 0
+    min_elevation: float = 0,
 ):
     """
     Check what is overhead within given time intervall and returns a dataframe of satellites
@@ -73,20 +73,8 @@ def main():
         help="ISO Formatted date string in UTC",
         type=lambda s: datetime.fromisoformat(s).replace(tzinfo=timezone.utc),
     )
-    parser.add_argument(
-        "-e",
-        "--min_elevation",
-        help="Min Elevation in degrees",
-        type=float,
-        default=0.0
-    )
-    parser.add_argument(
-        "-o",
-        "--output",
-        help="Csv output",
-        type=str,
-        default=""
-    )
+    parser.add_argument("-e", "--min_elevation", help="Min Elevation in degrees", type=float, default=0.0)
+    parser.add_argument("-o", "--output", help="Csv output", type=str, default="")
     parser.add_argument(
         "--starlink_groups",
         dest="starlink_groups",
@@ -100,7 +88,9 @@ def main():
     else:
         logging.basicConfig(level=logging.INFO)
 
-    df = check_overhead_df(args.latitude, args.longitude, args.starttime, args.endtime, min_elevation=args.min_elevation)
+    df = check_overhead_df(
+        args.latitude, args.longitude, args.starttime, args.endtime, min_elevation=args.min_elevation
+    )
 
     if args.output is not None and len(args.output) > 0:
         df.to_csv(args.output)
