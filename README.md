@@ -36,3 +36,15 @@ Output:
 * **What are Starlink Groups?**
 
 A the definition of a starlink group is taken from [here](https://space.skyrocket.de/doc_sdat/starlink-v1-5.htm) and [here](https://space.skyrocket.de/doc_sdat/starlink-v2-mini.htm). Essentially they refer to which orbital shell a satellite belongs. This is interesting when discussing connectivity to starlink when you are at a specific latitude.
+
+* **Does this access historical TLE data, so we can make accurate predictions on timestamp far to the past?**
+
+No. At least not yet.
+
+* **The command takes so long! Why is that?**
+
+Even by caching the requested tles, the majority of the computation times is probably spent on orbit propagation for every satellite in the constellation. Maybe we can cache that...
+
+* **Why is thera a FAQ for such a tiny project?**
+
+Because I can.
