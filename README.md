@@ -20,11 +20,15 @@ To constitute an overpass, the following conditions must hold:
 
 
 If you are specifically interested in which starlink groups is over your head, you can use the `--starlink_groups` flag. It will yield an output like as follows:
-```
-python -m main 59.6395 17.9215 2023-10-03T12:07:00 2023-10-03T12:08:00 --starlink_groups
 
-[Output]
-['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'L2', 'L4', 'L5', 'L6', 'L7', 'L9', 'R1']
+```
+python -m main 59.6395 17.9215 2023-10-03T12:07:00 2023-10-03T12:08:00 --starlink_groups --min_elevation 20
+```
+
+Output:
+
+```
+['G1', 'G2', 'G3', 'G4']
 ```
 
 ## FAQ

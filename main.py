@@ -14,6 +14,7 @@ def check_overhead_df(
     starttime: datetime,
     endtime: datetime,
     constellation=Constellation.STARLINK,
+    min_elevation: float = 0
 ):
     """
     Check what is overhead within given time intervall and returns a dataframe of satellites
@@ -24,7 +25,7 @@ def check_overhead_df(
 
     repository = SatelliteRepository.fetch_constellation(constellation=constellation, reference_epoch=starttime)
     coordinate = Coordinate(latitude, longitude)
-    min_elevation = 0.0
+    min_elevation = min_elevation
 
     overpassing_sats = []
     sat: ConstellationSatellite
@@ -73,6 +74,13 @@ def main():
         type=lambda s: datetime.fromisoformat(s).replace(tzinfo=timezone.utc),
     )
     parser.add_argument(
+        "-e",
+        "--min_elevation",
+        help="Min Elevation in degrees",
+        type=float,
+        default=0.0
+    )
+    parser.add_argument(
         "-o",
         "--output",
         help="Csv output",
@@ -92,13 +100,15 @@ def main():
     else:
         logging.basicConfig(level=logging.INFO)
 
-    df = check_overhead_df(args.latitude, args.longitude, args.starttime, args.endtime)
+    df = check_overhead_df(args.latitude, args.longitude, args.starttime, args.endtime, min_elevation=args.min_elevation)
 
     if args.output is not None and len(args.output) > 0:
         df.to_csv(args.output)
 
     if args.starlink_groups:
-        print(sorted(list(set(df["GROUP"]))))
+        group_list = sorted(list(set(df["GROUP"])))
+        # This is a bit hacky but the L/R group are a bit confusing
+        print([g for g in group_list if "G" in g])
 
 
 if __name__ == "__main__":
