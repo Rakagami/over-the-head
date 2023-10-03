@@ -2,3 +2,5 @@ requests
 skyfield
 beautifulsoup4
 pandas
+jupyter
+tqdm
