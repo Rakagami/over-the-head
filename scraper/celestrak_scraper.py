@@ -1,8 +1,6 @@
 from models import Constellation, ConstellationSatellite, TLE
-import requests
 import logging
-import os
-from pathlib import Path
+from utils.net import cached_get
 
 """
 Celestrak Scraper: https://celestrak.org/
@@ -25,18 +23,7 @@ class CelestrakScraper:
 
         # TODO: implement that caches that are too old are not used
         try:
-            cache_folder_path = Path("/tmp/scraper_cache/celestrak")
-            cache_file = f"{hash(url)}.txt"
-            cache_path = cache_folder_path / cache_file
-            if os.path.isdir(cache_folder_path) and os.path.exists(cache_path):
-                with open(cache_path) as f:
-                    response_text = f.read()
-            else:
-                response = requests.get(url)
-                response_text = response.text
-                cache_folder_path.mkdir(parents=True, exist_ok=True)
-                with open(cache_path, "w") as f:
-                    f.write(response_text)
+            response_text = cached_get(url, base_path="/tmp/scraper_cache/celestrak")
             tle_list = [line.strip() for line in response_text.split("\n") if line != ""]
 
             def get_satellite(i):

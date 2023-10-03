@@ -1,8 +1,8 @@
 from models import Constellation
 import pandas as pd
-import requests
 import bs4
 import logging
+from utils.net import cached_get
 
 """
 Gunter's Space Page Scraper: https://space.skyrocket.de/
@@ -73,6 +73,7 @@ class GSPScraper:
         Constellation.ORBCOMM: [],
         Constellation.SWARM: [],
     }
+    hash(None)
 
     @classmethod
     def scrape_url(cls, url):
@@ -81,18 +82,7 @@ class GSPScraper:
         """
         # TODO: implement that caches that are too old are not used
         try:
-            cache_folder_path = Path("/tmp/scraper_cache/gsp")
-            cache_file = f"{hash(url)}.txt"
-            cache_path = cache_folder_path / cache_file
-            if os.path.isdir(cache_folder_path) and os.path.exists(cache_path):
-                with open(cache_path) as f:
-                    response_text = f.read()
-            else:
-                response = requests.get(url)
-                response_text = response.text
-                cache_folder_path.mkdir(parents=True, exist_ok=True)
-                with open(cache_path, "w") as f:
-                    f.write(response_text)
+            response_text = cached_get(url, base_path="/tmp/scraper_cache/gsp")
 
             soup = bs4.BeautifulSoup(response_text, features="html.parser")
             satdata = soup.find("table", {"id": "satdata"})
@@ -132,9 +122,18 @@ class GSPScraper:
 
             df = pd.DataFrame(satlist_dict)
             return df
-        except:
-            logging.warning(f"Could not scrape url {url}")
-            return pd.DataFrame({})
+        except Exception as e:
+            logging.warning(f"Could not scrape url {url}. Got exception {e}")
+            satlist_dict = {
+                "Satellite": [],
+                "COSPAR": [],
+                "Date": [],
+                "LS": [],
+                "Failed": [],
+                "Launch Vehicle": [],
+                "Remarks": [],
+            }
+            return pd.DataFrame(satlist_dict)
 
     @classmethod
     def scrape_constellation(cls, constellation: Constellation):
