@@ -35,4 +35,4 @@ Output:
 
 * **What are Starlink Groups?**
 
-A the definition of a starlink group is taken from [here](https://space.skyrocket.de/doc_sdat/starlink-v1-5.htm).
+A the definition of a starlink group is taken from [here](https://space.skyrocket.de/doc_sdat/starlink-v1-5.htm) and [here](https://space.skyrocket.de/doc_sdat/starlink-v2-mini.htm). Essentially they refer to which orbital shell a satellite belongs. This is interesting when discussing connectivity to starlink when you are at a specific latitude.
